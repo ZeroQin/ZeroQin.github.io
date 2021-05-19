@@ -71,6 +71,536 @@
       <div class="outer">
         <section id="main">
   
+    <article id="post-无人机运动目标跟踪" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2021/05/20/%E6%97%A0%E4%BA%BA%E6%9C%BA%E8%BF%90%E5%8A%A8%E7%9B%AE%E6%A0%87%E8%B7%9F%E8%B8%AA/" class="article-date">
+  <time class="dt-published" datetime="2021-05-19T20:41:58.704Z" itemprop="datePublished">2021-05-20</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <h1 id="无人机运动目标跟踪"><a href="#无人机运动目标跟踪" class="headerlink" title="无人机运动目标跟踪"></a>无人机运动目标跟踪</h1><h2 id="目标跟踪"><a href="#目标跟踪" class="headerlink" title="目标跟踪"></a>目标跟踪</h2><h3 id="目标特征："><a href="#目标特征：" class="headerlink" title="目标特征："></a>目标特征：</h3><ul>
+<li>以目标区域的颜色直方图作为特征，颜色特征具有旋转不变性，且不受目标物大小和形状的变化影响，在颜色空间中分布大致相同。</li>
+<li> 目标的轮廓特征，算法速度较快，并且在目标有小部分遮挡的情况下同样有较好的效果。</li>
+<li>目标的纹理特征，纹理特征较轮廓特征跟踪效果会有所改善。</li>
+</ul>
+<h3 id="目标跟踪算法"><a href="#目标跟踪算法" class="headerlink" title="目标跟踪算法"></a>目标跟踪算法</h3><ul>
+<li><h4 id="均值漂移算法（meanshif"><a href="#均值漂移算法（meanshif" class="headerlink" title="均值漂移算法（meanshif)"></a>均值漂移算法（meanshif)</h4></li>
+</ul>
+<p>可以通过较少的迭代次数快速找到与目标最相似的位置，效果也挺好的。但是其不能解决目标的遮挡问题并且不能适应运动目标的的形状和大小变化等。对其改进的算法有 camshift 算法，此方法可以适应运动目标的大小形状的改变，具有较好的跟踪效果，但当背景色和目标颜色接近时，容易使目标的区域变大，最终有可能导致目标跟踪丢失。</p>
+<ul>
+<li><h4 id="基于Kalman滤波的目标跟踪"><a href="#基于Kalman滤波的目标跟踪" class="headerlink" title="基于Kalman滤波的目标跟踪"></a>基于Kalman滤波的目标跟踪</h4></li>
+</ul>
+<p>认为物体的运动模型服从高斯模型，来对目标的运动状态进行预测，然后通过与观察模型进行对比，根据误差来更新运动目标的状态，该算法的精度不是特高。</p>
+<ul>
+<li><h4 id="基于粒子滤波的目标跟踪"><a href="#基于粒子滤波的目标跟踪" class="headerlink" title="基于粒子滤波的目标跟踪"></a>基于粒子滤波的目标跟踪</h4></li>
+</ul>
+<p>每次通过当前的跟踪结果重采样粒子的分布，然后根据粒子的分布对粒子进行扩散，再通过扩散的结果来重新观察目标的状态，最后归一化更新目标的状态。此算法的特点是跟踪速度特别快，而且能解决目标的部分遮挡问题，在实际工程应用过程中越来越多的被使用。</p>
+<ul>
+<li>基于对运动目标建模的目标跟踪</li>
+</ul>
+<p>需要提前通过先验知识知道所跟踪的目标对象是什么，比如车辆、行人、人脸等。通过对要跟踪的目标进行建模，然后再利用该模型来进行实际的跟踪。该方法必须提前知道要跟踪的目标对象是什么，然后再去跟踪指定的目标，这是它的局限性，因而其推广性相对比较差。</p>
+<h2 id="基于粒子滤波"><a href="#基于粒子滤波" class="headerlink" title="基于粒子滤波"></a>基于粒子滤波</h2><p>粒子滤波实现运动目标跟踪分为四个步骤：1) 初始化提取运动目标特征；2）特征搜索阶段；3）决策阶段；4）粒子重采样。这后面三个过程的依次循环实现的对运动目标的跟踪。</p>
+<p>　　1）提取运动目标特征</p>
+<p>　　这个阶段需要通过人机交互选定待跟踪的目标，通过计算跟踪目标的特征，如目标的颜色特征，计算该区域颜色空间的直方图，以此作为描述目标的特征。</p>
+<p>　　2）特征搜索阶段</p>
+<p>　　初始化提取了目标的特征后，就可以去在目标的周围撒粒子搜索目标对象。撒粒子的方法有很多，例如：a) 均匀分布的放：即在整个视频画面中均匀的撒粒子。b) 在目标的附近以高斯分布来撒粒子，即靠近目标的地方多撒些，离目标较远的地方少放些。每个粒子按照初始化时候得到的目标特征计算出它所处的位置的颜色特征，并计算该直方图向量与目标的直方图向量的相似性程度。然后对每个粒子与目标计算出的相似度做归一化，使得所有粒子的相似度加起来和等于 1。</p>
+<p>　　3）决策阶段</p>
+<p>　　根据每个粒子与目标的相似程度做加权平均。设第 i 个粒子的坐标是，它和目标的相似度是，则目标的最可能的位置为：,，n 为粒子的个数。</p>
+<p>　　4）粒子重采样</p>
+<p>　　粒子重采样就是根据相似度的大小重新分配粒子的个数，即在相似度最高的粒子出放更多的粒子，在相似度低的粒子那少放粒子。粒子滤波算法的核心思想就是粒子的随机采样和粒子的重要性重采样。因为不知道目标在那个位置，就随机的进行撒粒子。撒完粒子后，根据描述目标的特征相似度来计算每个粒子的相似度，然后在相似度高的地方多撒些粒子，相似度低的地方少撒粒子，这就是粒子滤波的思想。</p>
+<h2 id="基于轮廓的跟踪"><a href="#基于轮廓的跟踪" class="headerlink" title="基于轮廓的跟踪"></a>基于轮廓的跟踪</h2><p>形状复杂的目标是很难用简单的几何形状来描述的。基于轮廓的目标跟踪方法提供了更准确的形状描述。这种方法的主要思想是利用前一帧建立的目标模型找到当前帧的目标区域。模型可以是目标区域的颜色直方图、边缘或轮廓。基于轮廓的目标跟踪方法大体上可以分为形状匹配、轮廓跟踪。前者搜索目标在当前帧特征，后者通过状态空间模型或直接最小化能量函数推导初始轮廓在当前帧的位置。</p>
+<h3 id="1、形状匹配方法"><a href="#1、形状匹配方法" class="headerlink" title="1、形状匹配方法"></a>1、形状匹配方法</h3><p>　　这种方法和基于模板的目标跟踪方法相似，基本思想都是在当前帧中搜索目标的轮廓和目标的相关模型。另一种方法是在连续帧中寻找关联轮廓，使用目标的外观特征，建立轮廓关联，或者称为轮廓匹配，和点匹配方法类似。</p>
+<p>　　首先，由背景减除法来进行轮廓检测；再次，提取轮廓后，计算目标的模型和每个轮廓之间距离来实现匹配；目标的模型可以是密度函数 (颜色特征或边缘直方图)、目标边缘、轮廓边界或这些信息的组合。</p>
+<h3 id="2、轮廓跟踪"><a href="#2、轮廓跟踪" class="headerlink" title="2、轮廓跟踪"></a>2、轮廓跟踪</h3><p>　　从上一帧的轮廓位置预测出当前帧的轮廓。当前帧和上一帧的目标轮廓有重叠部分，大体上可分为两种实现方式，用状态空间模型对目标的轮廓的形状和运动状态建模，或用梯度搜索进行推演轮廓。梯度搜索是一种轮廓能量最小化方法。</p>
+<p>　　1）状态空间模型的目标跟踪</p>
+<p>　　由轮廓的形状和目标的运动参数（如，速度、加速度、运动方向等）定义目标的状态，在轮廓的后验概率最大时更新目标状态。</p>
+<p>　　2）能量最小化方法的目标跟踪</p>
+<p>　　此方法和目标分割方法类似，其中的分割和跟踪部分都是通过梯度下降法或贪婪算法来最小化能量。</p>
+<p>　　3）讨论</p>
+<p>　　轮廓跟踪通常在跟踪整个目标区域时使用，其最突出的优点在于能更好的适应目标形状的变化。在轮廓跟踪算法中，目标表达可以是外观模型、形状模型、运动模型或这几个模型的组合。目标模型可密度函数进行建模，目标形状用轮廓子空间形式进行建模。在直观的轮廓搜索中基于外观的形状表达得到普遍应用。Hausdroff 距离是对基于边缘形状的表达的最广泛测量方法。</p>
+<h2 id="遮挡处理"><a href="#遮挡处理" class="headerlink" title="遮挡处理"></a>遮挡处理</h2><p>　通常，遮挡可以分为三种情况：目标间遮挡、背景遮挡、自遮挡。对于目标之间的相互遮挡，可以选择根据目标的位置和目标特征的先验知识来处理这一问题。而对于场景结构的导致的部分遮挡此方法则难以判断，因为难以辨认究竟是目标形状发生变化还是发生遮挡。所以，处理遮挡问题的通用方法是用线性或非线性动态建模方法对运动目标进行，并在目标发生遮挡时，预测目标的可能位置，一直到目标重新出现时再修正它的位置。可以用卡尔曼滤波器来实现估计目标的位置，也可以用粒子滤波对目标做状态估计。或者使用：轮廓投影、光流特征等方法。</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://example.com/2021/05/20/%E6%97%A0%E4%BA%BA%E6%9C%BA%E8%BF%90%E5%8A%A8%E7%9B%AE%E6%A0%87%E8%B7%9F%E8%B8%AA/" data-id="ckovxlo6p0006c4v3fqrv2xrx" data-title="" class="article-share-link">Share</a>
+      
+      
+      
+    </footer>
+  </div>
+  
+</article>
+
+
+
+  
+    <article id="post-无人机导航制导与控制" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2021/05/20/%E6%97%A0%E4%BA%BA%E6%9C%BA%E5%AF%BC%E8%88%AA%E5%88%B6%E5%AF%BC%E4%B8%8E%E6%8E%A7%E5%88%B6/" class="article-date">
+  <time class="dt-published" datetime="2021-05-19T20:41:58.688Z" itemprop="datePublished">2021-05-20</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <p><img src="http://img.mp.itc.cn/upload/20170327/f361c2fc005443068fb6fcfb2391a989.jpeg" alt="导航制导与控制"></p>
+<p>导航：无人机获得自己当前（在某个参照系下）的位置、速度等信息，必要时还需要获得当前（相对于某个参照系）的姿态、姿态角速度等信息。“知道自己在哪，知道自己的姿态”。</p>
+<p>制导：无人机发现（或外部输入）目标的位置、速度等信息，并根据自己的位置、速度以及内部性能和外部环境的约束条件，获得抵达目标所需的位置或速度指令。 “知道目标在哪，如何抵达目标”。</p>
+<ul>
+<li>按照规划的航路点飞行时，计算无人机径直或者沿某个航线飞抵航路点的指令；</li>
+<li>采用基于计算机视觉目标跟踪的光学制导时，根据目标在视场中的位置（以及摄像头可能存在的离轴角）计算跟踪目标所需的过载或者姿态角速度指令；</li>
+<li>当预装（或 SLAM 获得的）地图中存在需要规避的障碍物或禁飞区时，根据无人机飞行性能计算可行的规避路线或者速度指令。</li>
+</ul>
+<p>控制：根据当前的速度、姿态等信息，通过执行机构作用来改变姿态、速度等参数，进而实现稳定飞行或跟踪制导指令。 “改变飞行姿态，跟踪制导指令”。</p>
+<p>联系：</p>
+<ul>
+<li>在指令计算和执行上有顺承关系</li>
+<li>在实际系统中，三者可能会有很多交叉因素。</li>
+<li>导航系统中所测量或估计出的角速度，既要用于导航系统的速度和位置估计，又要用于姿态控制；</li>
+<li>在一些高机动性的飞行器和空天飞行器上有制导与控制一体化设计的趋势。</li>
+</ul>
+<h1 id="导航"><a href="#导航" class="headerlink" title="导航"></a>导航</h1><h2 id="基于绝对参考系"><a href="#基于绝对参考系" class="headerlink" title="基于绝对参考系"></a>基于绝对参考系</h2><h3 id="惯性导航"><a href="#惯性导航" class="headerlink" title="惯性导航"></a>惯性导航</h3><h4 id="惯性平台"><a href="#惯性平台" class="headerlink" title="惯性平台"></a>惯性平台</h4><h4 id="捷联导航"><a href="#捷联导航" class="headerlink" title="捷联导航"></a>捷联导航</h4><h2 id="基于距离测量的导航"><a href="#基于距离测量的导航" class="headerlink" title="基于距离测量的导航"></a>基于距离测量的导航</h2><h3 id="卫星导航"><a href="#卫星导航" class="headerlink" title="卫星导航"></a>卫星导航</h3><h3 id="室内定位"><a href="#室内定位" class="headerlink" title="室内定位"></a>室内定位</h3><p>WIFI 定位和 UWB 定位技术</p>
+<h2 id="基于特征匹配的导航"><a href="#基于特征匹配的导航" class="headerlink" title="基于特征匹配的导航"></a>基于特征匹配的导航</h2><h3 id="地形匹配"><a href="#地形匹配" class="headerlink" title="地形匹配"></a>地形匹配</h3><h3 id="运动捕捉系统"><a href="#运动捕捉系统" class="headerlink" title="运动捕捉系统"></a>运动捕捉系统</h3><p><strong>稀疏光流算法</strong>：根据灰度图像中特征点的运动计算出无人机的运动速度</p>
+<p><strong>SLAM</strong>:通过将运动中实时采集的图像特征性信息与惯导等系统信息进行融合，从而可以在未知环境中一边完成周围场景的三维模型重建，一边进行自身在场景中相对位置和速度的解算。</p>
+<h1 id="制导"><a href="#制导" class="headerlink" title="制导"></a>制导</h1><h2 id="航点和航线跟踪"><a href="#航点和航线跟踪" class="headerlink" title="航点和航线跟踪"></a>航点和航线跟踪</h2><ul>
+<li><p>现阶段大多数军用还是民用无人机在自动飞行过程中仅需完成航路点或航线的跟踪；</p>
+</li>
+<li><p>多旋翼无人机，跟踪航路点时只需要将飞行速度方向对准下一个航路点，跟踪航线也仅需首先飞到航线上距离当前位置最近的点即可；</p>
+</li>
+<li><p>对于固定翼无人机相对复杂。因为固定翼无人机的速度方向需要通过航向来改变，而航向则需要通过滚转来改变，这就使得滚转角与速度方向之间形成了近似二阶环节的过程，这通常可以运用导弹的比例导引法来实现航路点跟踪。</p>
+</li>
+</ul>
+<h3 id="比例导引法"><a href="#比例导引法" class="headerlink" title="比例导引法"></a>比例导引法</h3><p>让飞行器速度矢量在空间中的转动角速度正比于飞行器与目标间的视线角变化率，对于航路点这一静止目标，只需要无人机与航路点之间的距离足够，就可以保证准确抵达下一个航路点，而对于航线跟踪，则需要选择一个虚拟的目标点使得无人机首先向航线靠近，然后再逐步将方向对准航线方向。</p>
+<p><img src="http://img.mp.itc.cn/upload/20170327/bb233c0cbf6842db9feee2052113b57b_th.jpeg" alt="img"></p>
+<h2 id="复杂制导"><a href="#复杂制导" class="headerlink" title="复杂制导"></a>复杂制导</h2><p>随着无人机在多种场景下应用的不断深入，除了航路点和航线的跟踪以外，无人机抵达目标的<strong>最优路径选择</strong>，<strong>障碍物或禁飞区规避</strong>以及多机<strong>协同工作</strong>所需要的制导策略越来越复杂。</p>
+<h3 id="最优控制"><a href="#最优控制" class="headerlink" title="最优控制"></a>最优控制</h3><p>最优控制方法在航天器轨道转移、火箭入轨制导等问题中起到了良好的效果</p>
+<h3 id="特殊路径优化方法"><a href="#特殊路径优化方法" class="headerlink" title="特殊路径优化方法"></a>特殊路径优化方法</h3><p>大气中飞行的无人机路径规划，基于间接法的最优控制问题很难求解，因此无人机路径规划往往采用<strong>基于网格地图的搜索算法</strong>，或者蚁群算法、遗传算法等特殊的路径优化方法。</p>
+<ul>
+<li>基于概率地图的搜索算法中，首先运用随机概率方法在自由空间（任务空间中，除去障碍物后的空间）中选取采样点，并选取距离当前点最近的 k 个点构成当前点的临近点集，然后利用局部规划器将当前点与其临近点集中的所有点用直线段连接起来，同时进行相交检验，将不与障碍物相交的直线段保留下来构成一个图，作为初始路径， 完成路径规划的学习阶段；在查询阶段，运用优化方法对上述图进行搜索，从而得到由图的边构成的从出发点到目的点并满足优化目标的路径。</li>
+<li>人工势场法，其基本思想是将无人机的运动，设计成一种在抽象的人造引力场中的运动，如下图所示，目标物对无人机产生 “引力”，而障碍物对无人机产生 “斥力”，通过求解目标和所有障碍物对无人机产生的合力，就可以得到无人机运动速度或加速度指令。相对于大多数搜索算法，人工势场法运算量更小，且得到的轨迹更平滑。</li>
+</ul>
+<p>以上这两类制导算法通常适用于一架无人机的航路跟踪或路径规划，而当设计无人机编队甚至集群时，问题复杂程度则骤增。对于集群中的某个无人机来说，其他无人机既是可以协作和互通信息的伙伴，同时又是快速移动的障碍物，而整个集群的路径规划有需要考虑集群以及其中每一架无人机特性所形成的约束条件，或者当集群处于协同作战模式时，又需要对目标自发形成各角度的全向饱和攻击，当然，这其中需要解决的问题正是当前研究的热点。</p>
+<h1 id="控制"><a href="#控制" class="headerlink" title="控制"></a>控制</h1><p>最常用的控制算法还是历久弥新的 PID，通过将被控参数参考值与当前值误差的比例、积分和微分进行适当组合，便能够完成大部分近似线性系统的有效控制。</p>
+<p><img src="http://img.mp.itc.cn/upload/20170327/231ef0cd124c40829cb0e855f71af25b.jpeg" alt="img"></p>
+<ul>
+<li>位置型</li>
+</ul>
+<p>$$<br>u(k)=K_p(err(k)+\frac{T}{T_i}\sum{err(j)}+\frac{T_d}{T}(err(k)-err(k-1)))<br>$$</p>
+<p>$$<br>u(k)=K_p(err(k)+K_i\sum{err(j)}+K_d(err(k)-err(k-1)))<br>$$</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> _<span class="title">pid</span>&#123;</span></span><br><span class="line">    <span class="keyword">float</span> setSpeed;            <span class="comment">// 定义设定值</span></span><br><span class="line">    <span class="keyword">float</span> c;        <span class="comment">// 定义实际值</span></span><br><span class="line">    <span class="keyword">float</span> err;                <span class="comment">// 定义偏差值</span></span><br><span class="line">    <span class="keyword">float</span> err_last;            <span class="comment">// 定义上一个偏差值</span></span><br><span class="line">    <span class="keyword">float</span> Kp,Ki,Kd;            <span class="comment">// 定义比例、积分、微分系数</span></span><br><span class="line">    <span class="keyword">float</span> output;          <span class="comment">// 定义电压值（控制执行器的变量）</span></span><br><span class="line">    <span class="keyword">float</span> integral;            <span class="comment">// 定义积分值</span></span><br><span class="line">    <span class="keyword">float</span> minOut;</span><br><span class="line">    <span class="keyword">float</span> maxOut;</span><br><span class="line">&#125;PID;</span><br><span class="line"></span><br><span class="line"><span class="comment">/*****初始化**********/</span></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">PID_init</span><span class="params">(PID pid)</span></span>&#123;</span><br><span class="line">    <span class="comment">//printf(&quot;PID_init begin \n&quot;);</span></span><br><span class="line">    pid.setSpeed=<span class="number">0.0</span>;</span><br><span class="line">    pid.setSpeed=<span class="number">0.0</span>;</span><br><span class="line">    pid.err=<span class="number">0.0</span>;</span><br><span class="line">    pid.err_last=<span class="number">0.0</span>;</span><br><span class="line">    pid.voltage=<span class="number">0.0</span>;</span><br><span class="line">    pid.integral=<span class="number">0.0</span>;</span><br><span class="line">    pid.Kp=<span class="number">0.2</span>;</span><br><span class="line">    pid.Ki=<span class="number">0.015</span>;</span><br><span class="line">    pid.Kd=<span class="number">0.2</span>;</span><br><span class="line">    pid.minOut=<span class="number">-100</span>;</span><br><span class="line">    pid.maxOut=<span class="number">100</span>;</span><br><span class="line">    <span class="comment">//printf(&quot;PID_init end \n&quot;);</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">/********位置式PID控制器实现**********/</span></span><br><span class="line"><span class="function"><span class="keyword">float</span> <span class="title">PID_Pos</span><span class="params">(PID pid)</span></span>&#123;</span><br><span class="line">    <span class="keyword">float</span> P,D;</span><br><span class="line">    pid.err=pid.SetSpeed-pid.ActualSpeed;</span><br><span class="line">    P=pid.Kp*pid.err;</span><br><span class="line">    pid.integral+=pid.err;<span class="comment">// 位置式 pid 是对积分的持续累加，容易造成积分饱和，是系统过调</span></span><br><span class="line">    D=pid.Kd*(pid.err-pid.err_last);</span><br><span class="line">    pid.output=P+pid.Ki*pid.integral+D;</span><br><span class="line">    <span class="keyword">if</span>(pid.minOut&gt;pid.output)</span><br><span class="line">    &#123;</span><br><span class="line">        pid.integral=pid.minOut-P-D;</span><br><span class="line">        pid.output=pid.minOut</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span>(pid.maxOut&lt;pid.output)</span><br><span class="line">    &#123;</span><br><span class="line">        pid.integral=pid.maxOut-P-D;</span><br><span class="line">        pid.output=pid.minOut</span><br><span class="line">    &#125;</span><br><span class="line">    pid.err_last=pid.err;</span><br><span class="line">    <span class="keyword">return</span> pid.output;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<ul>
+<li>增量式</li>
+</ul>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/********增量式PID控制器实现**********/</span></span><br><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> _<span class="title">pid_dlt</span>&#123;</span></span><br><span class="line">    <span class="keyword">float</span> SetSpeed;            <span class="comment">// 定义设定值</span></span><br><span class="line">    <span class="keyword">float</span> ActualSpeed;        <span class="comment">// 定义实际值</span></span><br><span class="line">    <span class="keyword">float</span> err;                <span class="comment">// 定义偏差值</span></span><br><span class="line">    <span class="keyword">float</span> err_next;            <span class="comment">// 定义上一个偏差值</span></span><br><span class="line">    <span class="keyword">float</span> err_last;            <span class="comment">// 定义最上前的偏差值</span></span><br><span class="line">    <span class="keyword">float</span> Kp,Ki,Kd;            <span class="comment">// 定义比例、积分、微分系数</span></span><br><span class="line">&#125;PID_Dlt;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">PID_init</span><span class="params">(PID_Dlt pid)</span></span>&#123;</span><br><span class="line">    pid.SetSpeed=<span class="number">0.0</span>;</span><br><span class="line">    pid.ActualSpeed=<span class="number">0.0</span>;</span><br><span class="line">    pid.err=<span class="number">0.0</span>;</span><br><span class="line">    pid.err_last=<span class="number">0.0</span>;</span><br><span class="line">    pid.err_next=<span class="number">0.0</span>;</span><br><span class="line">    pid.Kp=<span class="number">0.2</span>;</span><br><span class="line">    pid.Ki=<span class="number">0.015</span>;</span><br><span class="line">    pid.Kd=<span class="number">0.2</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">float</span> <span class="title">PID_Dlt</span><span class="params">(PID_Dlt pid)</span></span>&#123;</span><br><span class="line">    pid.SetSpeed=speed;</span><br><span class="line">    pid.err=pid.SetSpeed-pid.ActualSpeed;</span><br><span class="line">    <span class="keyword">float</span> incrementSpeed=pid.Kp*(pid.err-pid.err_next)+pid.Ki*pid.err+pid.Kd*(pid.err<span class="number">-2</span>*pid.err_next+pid.err_last);<span class="comment">// 只和前后三次的误差值有关，也方便计算</span></span><br><span class="line">    pid.ActualSpeed+=incrementSpeed;</span><br><span class="line">    pid.err_last=pid.err_next;</span><br><span class="line">    pid.err_next=pid.err;</span><br><span class="line">    <span class="keyword">return</span> pid.ActualSpeed;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h2 id="改进PID："><a href="#改进PID：" class="headerlink" title="改进PID："></a>改进PID：</h2><h3 id="增益调度"><a href="#增益调度" class="headerlink" title="增益调度"></a>增益调度</h3><p>既然 PID 控制器设计过程一般是在某个平衡点处做系统的小扰动线性化方程（平心而论，工程中还真不都是这么按流程来，各种野路子都有），进而完成设计的，那么只要在正常工作范围（对于无人机来说可以是飞行包线）内选取足够的平衡点，并根据每个平衡点的模型选择合适的 PID 控制参数，这样就可以在控制器工作中通过插值等方式选择相应平衡点附近的控制参数，这种变参数的方法就是一种增益调度方法，而基于增益调度的 PID 控制器就可以针对具有一定非线性特性的系统进行控制。这种方法在飞行控制中已应用多年。</p>
+<h3 id="参数自适应"><a href="#参数自适应" class="headerlink" title="参数自适应"></a>参数自适应</h3><p>比如以系统积分误差性能指标为准则，搜索使得误差性能指标为最小的参数作为控制器参数，又或者基于神经网络和遗传算法的参数自适应等，不过这些方法在工程中使用的比较少。</p>
+<h3 id="级联"><a href="#级联" class="headerlink" title="级联"></a>级联</h3><p>通过将被控系统分为内外环，只需要内外环的固有频率有一定的差别（比如说内环频率是外环的五倍以上，无人机的姿态响应和位置响应一般可以满足），即可用实现快变量和慢变量的分别控制，通过简单的调参就可以实现快速的内环响应和精确的外环控制，并具有比单个控制器更好的抗干扰性能。</p>
+<p> 内环 P：从小到大，拉动四轴越来越困难，越来越感觉到四轴在抵抗你的拉动；到比较大的数值时，四轴自己会高频震动，肉眼可见，此时拉扯它，它会快速的振荡几下，过几秒钟后稳定；继续增大，不用加人为干扰，自己发散翻机。<br>  特别注意：只有内环 P 的时候，四轴会缓慢的往一个方向下掉，这属于正常现象。这就是系统角速度静差。<br>  内环 I：前述 PID 原理可以看出，积分只是用来消除静差，因此积分项系数个人觉得没必要弄的很大，因为这样做会降低系统稳定性。从小到大，四轴会定在一个位置不动，不再往下掉；继续增加 I 的值，四轴会不稳定，拉扯一下会自己发散。</p>
+<p>特别注意：增加 I 的值，四轴的定角度能力很强，拉动他比较困难，似乎像是在钉钉子一样，但是一旦有强干扰，它就会发散。这是由于积分项太大，拉动一下积分速度快，给的补偿非常大，因此很难拉动，给人一种很稳定的错觉。</p>
+<p>内环 D：这里的微分项 D 为标准的 PID 原理下的微分项，即本次误差 - 上次误差。在角速度环中的微分就是角加速度，原本四轴的震动就比较强烈，引起陀螺的值变化较大，此时做微分就更容易引入噪声。因此一般在这里可以适当做一些滑动滤波或者 IIR 滤波。从小到大，飞机的性能没有多大改变，只是回中的时候更加平稳；继续增加 D 的值，可以肉眼看到四轴在平衡位置高频震动 (或者听到电机发出滋滋的声音)。前述已经说明 D 项属于辅助性项，因此如果机架的震动较大，D 项可以忽略不加。</p>
+<p> 外环 P：当内环 PID 全部整定完成后，飞机已经可以稳定在某一位置而不动了。此时内环 P，从小到大，可以明显看到飞机从倾斜位置慢慢回中，用手拉扯它然后放手，它会慢速回中，达到平衡位置；继续增大 P 的值，用遥控器给不同的角度给定，可以看到飞机跟踪的速度和响应越来越快；继续增加 P 的值，飞机变得十分敏感，机动性能越来越强，有发散的趋势</p>
+<h3 id="积分分离"><a href="#积分分离" class="headerlink" title="积分分离"></a>积分分离</h3><p>在启动、结束或大幅度增减设定时，短时间内系统输出有很大的偏差，会造成 PID 运算的积分积累，导致控制量超过执行机构可能允许的最大动作范围对应极限控制量，从而引起较大的超调，甚至是震荡，这是绝对不允许的。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"> pid.Kp=<span class="number">0.2</span>;</span><br><span class="line">    pid.Ki=<span class="number">0.04</span>;</span><br><span class="line">    pid.Kd=<span class="number">0.2</span>;  <span class="comment">// 初始化过程</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span>(<span class="built_in">abs</span>(pid.err)&gt;<span class="number">200</span>)</span><br><span class="line">    &#123;</span><br><span class="line">    index=<span class="number">0</span>;</span><br><span class="line">    &#125;<span class="keyword">else</span>&#123;</span><br><span class="line">    index=<span class="number">1</span>;</span><br><span class="line">    pid.integral+=pid.err;</span><br><span class="line">    &#125;</span><br><span class="line">  pid.voltage=pid.Kp*pid.err+index*pid.Ki*pid.integral+pid.Kd*(pid.err-pid.err_last);    </span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="积分抗饱和"><a href="#积分抗饱和" class="headerlink" title="积分抗饱和"></a>积分抗饱和</h3><p> 所谓的积分饱和现象是指如果系统存在一个方向的偏差，PID 控制器的输出由于积分作用的不断累加而加大，从而导致执行机构达到极限位置，若控制器输出 U (k) 继续增大，执行器开度不可能再增大，此时计算机输出控制量超出了正常运行范围而进入饱和区。一旦系统出现反向偏差，u (k) 逐渐从饱和区退出。进入饱和区越深则退出饱和区时间越长。在这段时间里，执行机构仍然停留在极限位置而不随偏差反向而立即做出相应的改变，这时系统就像失控一样，造成控制性能恶化，这种现象称为积分饱和现象或积分失控现象。</p>
+<p>  防止积分饱和的方法之一就是抗积分饱和法，该方法的思路是在计算 u (k) 时，首先判断上一时刻的控制量 u (k-1) 是否已经超出了极限范围： 如果 u (k-1)&gt;umax，则只累加负偏差；如果 u (k-1)&lt;umin，则只累加正偏差。从而避免控制量长时间停留在饱和区。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br></pre></td><td class="code"><pre><span class="line">float PID_realize(float speed)&#123;</span><br><span class="line">    int index;</span><br><span class="line">    pid.SetSpeed=speed;</span><br><span class="line">    pid.err=pid.SetSpeed-pid.ActualSpeed;</span><br><span class="line"></span><br><span class="line">   if (pid.ActualSpeed&gt;pid.umax) </span><br><span class="line">    &#123;</span><br><span class="line">       if (abs (pid.err)&gt;200)     </span><br><span class="line">        &#123;</span><br><span class="line">            index=0;</span><br><span class="line">        &#125;else&#123;</span><br><span class="line">            index=1;</span><br><span class="line">            if(pid.err&lt;0)</span><br><span class="line">            &#123;// 如果超上限要嘛加负值要嘛就不加了，免得进入饱和区</span><br><span class="line">              pid.integral+=pid.err;          </span><br><span class="line"></span><br><span class="line">                    &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;else if(pid.ActualSpeed&lt;pid.umin)&#123;</span><br><span class="line">        if (abs (pid.err)&gt;200)      // 积分分离过程</span><br><span class="line">        &#123;</span><br><span class="line">            index=0;</span><br><span class="line">        &#125;else&#123;</span><br><span class="line">            index=1;</span><br><span class="line">            if(pid.err&gt;0)</span><br><span class="line">            &#123;// 如果超下限要嘛加正值要嘛就不加了免得进入饱和区</span><br><span class="line">            pid.integral+=pid.err;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;else&#123;</span><br><span class="line">        if (abs (pid.err)&gt;200)                    // 积分分离过程</span><br><span class="line">        &#123;</span><br><span class="line">            index=0;</span><br><span class="line">        &#125;else&#123;</span><br><span class="line">            index=1;</span><br><span class="line">            pid.integral+=pid.err;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    pid.voltage=pid.Kp*pid.err+index*pid.Ki*pid.integral+pid.Kd*(pid.err-pid.err_last);</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    pid.err_last=pid.err;</span><br><span class="line">    pid.ActualSpeed=pid.voltage*1.0;</span><br><span class="line">    return pid.ActualSpeed;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="变积分的PID算法"><a href="#变积分的PID算法" class="headerlink" title="变积分的PID算法"></a>变积分的PID算法</h3><p>系统对于积分项的要求是，系统偏差大时，积分作用应该减弱甚至是全无，而在偏差小时，则应该加强。 这里给积分系数前加上一个比例值 index：</p>
+<p>  当 abs (err)&lt;180 时，index=1;</p>
+<p>  当 180&lt;abs (err)&lt;200 时，index=（200-abs (err)）/20;</p>
+<p>  当 abs (err)&gt;200 时，index=0;</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">float PID_realize(float speed)&#123;</span><br><span class="line">    float index;</span><br><span class="line">    pid.SetSpeed=speed;</span><br><span class="line">    pid.err=pid.SetSpeed-pid.ActualSpeed;</span><br><span class="line"></span><br><span class="line">    if (abs (pid.err)&gt;200)           // 变积分过程</span><br><span class="line">    &#123;</span><br><span class="line">    index=0.0;</span><br><span class="line">    &#125;else if(abs(pid.err)&lt;180)&#123;</span><br><span class="line">    index=1.0;</span><br><span class="line">    pid.integral+=pid.err;</span><br><span class="line">    &#125;else&#123;</span><br><span class="line">    index=(200-abs(pid.err))/20;</span><br><span class="line">    pid.integral+=pid.err;</span><br><span class="line">    &#125;</span><br><span class="line">    pid.voltage=pid.Kp*pid.err+index*pid.Ki*pid.integral+pid.Kd*(pid.err-pid.err_last);</span><br><span class="line"></span><br><span class="line">    pid.err_last=pid.err;</span><br><span class="line">    pid.ActualSpeed=pid.voltage*1.0;</span><br><span class="line">    return pid.ActualSpeed;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="专家系统PID"><a href="#专家系统PID" class="headerlink" title="专家系统PID"></a>专家系统PID</h3><p>  反应系统性能的两个参数是系统误差 e 和误差变化律 ec，</p>
+<p>  首先我们规定一个误差的极限值，假设为 Mmax；规定一个误差的比较大的值，假设为 Mmid；规定一个误差的较小值，假设为 Mmin；</p>
+<p>   e*ec&gt;0 误差在朝向误差绝对值增大的方向变化 (可以理解成速度和加速度)</p>
+<p>​       若此时 abs (e)&gt;Mmid ：误差较大 强控制 </p>
+<p>​       若此时 abs (e)&lt;Mmid ：误差绝对值本身并不是很大 一般的控制作用</p>
+<p>   e*ec&lt;0 误差在朝向误差绝对值减小的方向变化</p>
+<p>​       若此时 e*err (k-1)&gt;0 或者 e=0 ：误差的绝对值向减小的方向变化，或者已经达到平衡状态，</p>
+<p>​          此时保持控制器输出不变即可。 </p>
+<p>​       若此时 e*err (k-1)&lt;0 ： 误差处于极限状态。如果误差的绝对值 &gt; min，强控制 （调节幅度比较大）。 如果此时误差绝对值较小，可以考虑实施较弱控制作用。</p>
+<p>   当 abs（e）&gt;Mmax 时，说明误差的绝对值已经很大了，都应该考虑控制器的输入应按最大（或最小） 输出，以达到迅速调整误差的效果，使误差绝对值以最大的速度减小。</p>
+<p>   当 abs (e)&lt;Mmin 时，说明误差绝对值很小，此时加入积分，减小静态误差。</p>
+<h3 id="不完全微分"><a href="#不完全微分" class="headerlink" title="不完全微分"></a>不完全微分</h3><p>虽然被控参数一般不会出现突变，但是参考值却经常会出现突变，这使得误差的微分也会突变，为了降低这种突变造成的控制量幅值，可以采用不完全微分策略，即微分只作用于被控参数（如飞行控制中的角速度阻尼）</p>
+<h3 id="PID调参"><a href="#PID调参" class="headerlink" title="PID调参"></a>PID调参</h3><p>一般原则：</p>
+<ul>
+<li>在输出不振荡时，增大比例增益 P；</li>
+<li>在输出不振荡时，减小积分时间常数 Ti；</li>
+<li>在输出不振荡时，增大微分时间常数 Td；</li>
+</ul>
+<p>一般步骤：</p>
+<ol>
+<li>确定比例增益 P ：纯比例调节。输入设定为系统允许的最大值的 60%<del>70%，由 0 逐渐加大比例增益 P，直至系统出现振荡；再反过来，从此时的比例增益 P 逐渐减小，直至系统振荡消失，记录此时的比例增益 P，设定 PID 的比例增益 P 为当前值的 60%</del>70%。</li>
+<li>确定积分时间常数：设定一个较大的积分时间常数 Ti 的初值，然后逐渐减小 Ti，直至系统出现振荡，之后在反过来，逐渐加大 Ti，直至系统振荡消失。记录此时的 Ti，设定 PID 的积分时间常数 Ti 为当前值的 150%~180%。</li>
+<li>确定积分时间常数 Td： Td 一般不用设定，为 0 即可。若要设定，与确定 P 和 Ti 的方法相同，取不振荡时的 30%。</li>
+<li>系统空载、带载联调，再对 PID 参数进行微调，直至满足要求：理想时间两个波，前高后低 4 比1</li>
+</ol>
+<h2 id="反馈线性化"><a href="#反馈线性化" class="headerlink" title="反馈线性化"></a>反馈线性化</h2><p>利用数学变换的方法和微分几何学的知识，将状态和控制变量转变为线性形式，然后，利用常规的线性设计的方法进行设计，将设计的结果通过反变换，转换为原始的状态和控制形式。反馈线性化可以将存在通道间耦合的非线性系统变换为解耦的线性系统，方便外环的线性控制器设计。不过该方法应用中或多或少会存在<strong>建模误差</strong>，因此设计时要重点考虑<strong>鲁棒性</strong>的因素。</p>
+<h2 id="滑模变结构"><a href="#滑模变结构" class="headerlink" title="滑模变结构"></a>滑模变结构</h2><p>这种方法不需要对被控对象进行精确建模，而是在动态过程中，根据系统当前的状态 (如偏差及其各阶导数等) 有目的地不断变化，迫使系统按照预定 “滑动模态” 的状态轨迹运动。由于滑动模态可以进行设计且与对象参数及扰动无关，这就使得滑模控制具有快速响应、对应参数变化及扰动不灵敏、无需系统在线辨识、物理实现简单等优点。但是基本的滑模变结构算法存在控制参数抖振的问题，需要再趋近率设计时进行适当的优化策略。</p>
+<h2 id="反步控制"><a href="#反步控制" class="headerlink" title="反步控制"></a>反步控制</h2><p>基本思路是将复杂的系统分解成不超过系统阶数的多个子系统，然后通过反向递推为每个子系统设计部分李雅普诺夫函数和中间虚拟控制量，直至设计完成整个控制器。反步方法运用于飞控系统控制器的设计可以处理一类非线性、不确定性因素的影响，而且已经被证明具有比较好稳定性及误差的收敛性。</p>
+<h2 id="自适应逆"><a href="#自适应逆" class="headerlink" title="自适应逆"></a>自适应逆</h2><p>与动态逆的思想类似，这种方法运用各种自适应逆滤波网络（如 LMS 滤波器网络、神经网络等）去拟合出被控对象的逆系统，从而将控制器与被控对象构成的前向通道变换成一一映射的线性化解耦系统，而之所以称为 “自适应”，则是这个拟合出逆系统的网络可以在线学习被控对象的特性。这种方法在仿真中可以取得比传统控制方法优越很多的效果，但是由于滤波器网络可能存在无法检出的内部缺陷，所以在某些状态组合下，可能会出现故障（包括深度神经网络在内的所有神经网络都潜在此风险）。</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://example.com/2021/05/20/%E6%97%A0%E4%BA%BA%E6%9C%BA%E5%AF%BC%E8%88%AA%E5%88%B6%E5%AF%BC%E4%B8%8E%E6%8E%A7%E5%88%B6/" data-id="ckovxlo750009c4v316qzbft1" data-title="" class="article-share-link">Share</a>
+      
+      
+      
+    </footer>
+  </div>
+  
+</article>
+
+
+
+  
+    <article id="post-无人机传感器特性" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2021/05/20/%E6%97%A0%E4%BA%BA%E6%9C%BA%E4%BC%A0%E6%84%9F%E5%99%A8%E7%89%B9%E6%80%A7/" class="article-date">
+  <time class="dt-published" datetime="2021-05-19T20:41:58.673Z" itemprop="datePublished">2021-05-20</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <h1 id="无人机传感器特性"><a href="#无人机传感器特性" class="headerlink" title="无人机传感器特性"></a>无人机传感器特性</h1><p>15个状态量：三维角速度，三维角度，三维加速度、三维速度、三维位置</p>
+<p><img src="https://img-blog.csdn.net/2018091311212410?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3diNzkwMjM4MDMw/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70" alt="img"></p>
+<p>惯性测量元件：会受到温度、制造工艺的限制，产生一些测量的偏差。这类测量的偏差需要比较仔细的算法进行修正，而且往往不能单靠惯性测量元件自己的测量完全消除。</p>
+<p>地磁指南针：地磁线的强度非常弱，很容易受到干扰。</p>
+<p>气压计：会受到温度、湿度、空气流速、光照、振动等因素的影响</p>
+<p>GPS：只有在开阔的空间内才能给出比较好的测量值，因为 GPS 接收机需要从天上的卫星获得信号，这些信号要从太空传入大气层，这么远的距离，信号已经相对来说很微弱，所以必须要求接收机和卫星之间的连线上没有遮挡，一旦有建筑甚至是树木的遮挡，卫星发下来的信号就有噪声，GPS 接收机就不能给出很好的位置和速度观测。在室内环境中，GPS 甚至完全不能使用。</p>
+<p>光流：只能测量二维平面，离测量物体不能超过 5 米左右。</p>
+<p>视觉里程计：也就是单目和双目视觉，离测量物体不能超过 5 米左右。</p>
+<h1 id="组合导航"><a href="#组合导航" class="headerlink" title="组合导航"></a>组合导航</h1><p>克劳德 - 香农总结归纳出：信息可以用来估计状态，越多的信息可以把状态量估计得越准。控制论的奠基人诺伯特 - 维纳与其他一大批工程师和科学家完善了通过信息进行状态估计的线性估计理论，进一步提出了传感器之间 “互补滤波”, 共同减小误差的理论。在此基础上鲁道夫 - 卡尔曼提出了卡尔曼滤波器，在通信、控制工程和飞行器状态估计领域广泛使用。  </p>
+<p>因此，结合 GPS、惯性测量元件、地磁指南针和气压计各自的优缺点，使用电子信号处理领域的很技术，融合多种传感器的测量值，获得较为准确的飞行器十五个状态量的测量。</p>
+<h1 id="视觉感知"><a href="#视觉感知" class="headerlink" title="视觉感知"></a>视觉感知</h1><p>GPS 可以令发散的 IMU 等传感器通过组合导航技术收敛，但在感知系统中没有 GPS 的的情况下需要另一个传感器替代 GPS 组成新的感知系统感知十五个状态量。</p>
+<h2 id="光流"><a href="#光流" class="headerlink" title="光流"></a>光流</h2><p>只可以测三维速度，不能直接测量三维位置。同样可以通过把光流测速模块测出的三维速度积分获得三维位置，但是就像惯性测量元件积分会发散一样，光流测速模块积分得到的位置也会发散。好在它不会天马行空地失去控制。和组合导航技术中除了 GPS 之外的传感器妥善融合之后，它可以做到悬停时测量的位置不发散。</p>
+<h2 id="视觉里程计"><a href="#视觉里程计" class="headerlink" title="视觉里程计"></a>视觉里程计</h2><p>相比光流测速模块，增加了直接测量位置的能力，所以才叫 “里程计”。视觉里程计比光流测速模块能力更强，性能更好。视觉里程计算法复杂很多，它不仅要通过图像反推出视野中物体的平面运动，还要反推出这些物体的三维位置，并且基于这些物体的三维位置做很多次的优化计算，算法复杂度成倍于光流测速模块。有些视觉里程计的算法甚至包含完整的光流追踪的算法，但是仅仅把计算光流作为预处理图像的步骤。通常比较优秀的视觉里程计飞 100 米之后只会积累十几厘米到几十厘米的误差。</p>
+<h3 id="双目立体视觉系统加惯性测量元件"><a href="#双目立体视觉系统加惯性测量元件" class="headerlink" title="双目立体视觉系统加惯性测量元件"></a>双目立体视觉系统加惯性测量元件</h3><p>一个物体同时出现在左右两个相机的视野中时左右视野有视差，视差可以帮助解算物体的位置，只需要用简单的几何关系就可以实现，这已经是非常成熟的技术。</p>
+<p>在精灵 4 上飞机上装了两套双目立体视觉系统，一套向前看，一套向下看，一共是四个相机。</p>
+<p>向下看的一套双目立体视觉系统可以探测下方地面上物体的三维位置，从而知道地面的距离；</p>
+<p>向前看的一套双目立体视觉系统可以用来探测前方场景中物体的深度，产生深度图进行障碍感知。</p>
+<p>多场景适应：</p>
+<p>场景一：在十几层楼的窗口把飞行器从室内飞到室外悬停这种场景下，从窗口穿出时，向下看的传感器几乎马上全部失效，由于有建筑的遮挡，GPS 也不会立刻生效，因此传感器系统不够稳健的飞行器有可能因为失去速度和位置的测量而飘到建筑上造成高空炸机。而精灵 4 则能够通过前视双目视觉系统的观测，在向下看的传感器都暂时失效时继续运行视觉里程计，及时提供辅助的速度和位置观测，避免造成无法控制速度和位置导致炸机的情况出现。</p>
+<h2 id="单目视觉系统加惯性测量元件"><a href="#单目视觉系统加惯性测量元件" class="headerlink" title="单目视觉系统加惯性测量元件"></a>单目视觉系统加惯性测量元件</h2><p>必须能智能地在局部范围内同时估计很多个物体的位置，然后在自身移动过程中通过位置移动产生视差，然后进行多个物体的位置的最大似然估计，从而推算出这些物体比较准确的位置。这个过程包括很多个环节，大部分环节在学术界都没有公认最优的方案，因此还没有成熟的技术。</p>
+<h1 id="智能导航"><a href="#智能导航" class="headerlink" title="智能导航"></a>智能导航</h1><p>当有 GPS 的时候，系统可以通过 GPS 为主进行十五个状态量的测量，视觉里程计依然可以继续运作，提供额外的速度和位置的测量值进一步提高精度；GPS 信号不好的时候，视觉里程计可以接替 GPS 为整个系统提供稳定的观测。智能导航系统中有三种确定高度的传感器：超声波、气压计、双目立体视觉，这三种传感器几乎可以覆盖所有让传统多旋翼飞行器头疼的定高场景（树丛上方、室内、靠近建筑的位置、大风环境等）。</p>
+<p>地磁指南针的冗余设计可以很大程度上减小外部磁干扰带来的指南针故障。另外视觉里程计也能给出航向的观测，两者互补能够提高航向的观测精度。</p>
+<p>以前的飞行器上，因为地磁指南针受到干扰造成的炸机问题比较多，在精灵 4 上因为有了多重保护措施，地磁指南针被干扰导致问题的概率大大降低。</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://example.com/2021/05/20/%E6%97%A0%E4%BA%BA%E6%9C%BA%E4%BC%A0%E6%84%9F%E5%99%A8%E7%89%B9%E6%80%A7/" data-id="ckovxlo6l0004c4v3fllw89nv" data-title="" class="article-share-link">Share</a>
+      
+      
+      
+    </footer>
+  </div>
+  
+</article>
+
+
+
+  
+    <article id="post-无人机导航" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2021/05/20/%E6%97%A0%E4%BA%BA%E6%9C%BA%E5%AF%BC%E8%88%AA/" class="article-date">
+  <time class="dt-published" datetime="2021-05-19T20:41:58.673Z" itemprop="datePublished">2021-05-20</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <h1 id="单一导航"><a href="#单一导航" class="headerlink" title="单一导航"></a>单一导航</h1><h2 id="惯性导航"><a href="#惯性导航" class="headerlink" title="惯性导航"></a>惯性导航</h2><ul>
+<li><p>加速度计测量机体系轴向加速度，经积分得瞬时速度和位置。陀螺仪测量三轴转动。</p>
+</li>
+<li><p>完全自主，抗干扰，隐蔽性号、全天候工作，输出导航信息多，数据更新率高。</p>
+</li>
+<li><p>定位误差随时间积累，精度受惯导系统影响</p>
+</li>
+<li><p>可完成三维导航和二维导航</p>
+</li>
+</ul>
+<h2 id="定位卫星导航"><a href="#定位卫星导航" class="headerlink" title="定位卫星导航"></a>定位卫星导航</h2><p>为了求出接收机的位置 x、y、z，只要接收机测出四颗卫星的伪距，利用公式 (1) 便可得到四个方程，联立起来便可求出四个未知数 x、y、z 和 Δt。</p>
+<ul>
+<li>全天候工作，全球连续精密导航和定位，实时性好</li>
+<li>易受电磁干扰；GPS 系统接收机的工作受飞行器机动影响；更新频率低（1Hz~2Hz)</li>
+</ul>
+<h3 id="单星定位"><a href="#单星定位" class="headerlink" title="单星定位"></a>单星定位</h3><ul>
+<li>用户采用原子钟，从而保持用户的钟差不变（或变化可忽略）；</li>
+<li>用户的位置也应当是与时间独立的未知量，即要么用户是静止的，要么用户的运动速度很慢，这样在伪距序贯测量的时间段内其位置的变化才不大。通过 3 次及以上的序贯测量，得到 3 个伪距测量量，就可以获得用户的三维位置信息了。</li>
+<li>主要用于静点定位及船舰等低动态用户定位，不适合高动态的作战用户导航。</li>
+</ul>
+<h3 id="双星定位"><a href="#双星定位" class="headerlink" title="双星定位"></a>双星定位</h3><ul>
+<li>采用的是有源工作模式，即用户和地面中心之间要建立双向通信。通常有三种定位模式，即双发单收、双收单发的非视距模式和视距模式；</li>
+<li>两种非视距模式：用户在以卫星为中心的两个球面上，加一高度定位；</li>
+<li>视距模式 (用户与地面中心视距)：用户到卫星与地面中心的距离为定值，在两个椭球面上，加一高度定位。视距模式 (用户与地面中心视距)：用户到卫星与地面中心的距离为定值，在两个椭球面上，加一高度定位；</li>
+<li>双星定位系统给出的是二维定位数据，第三维数据可通过其它特定条件得知</li>
+</ul>
+<h3 id="三星定位"><a href="#三星定位" class="headerlink" title="三星定位"></a>三星定位</h3><ul>
+<li>三颗卫星都带有相互同步的精密时钟，用户同时接收三颗卫星发射的电波，分别测量卫星的信号到达时间差，相应得到距离差。</li>
+<li>用户不需要高稳定度的时钟，也无需发射信号，但系统仍为二维定位，</li>
+</ul>
+<h2 id="多普勒导航"><a href="#多普勒导航" class="headerlink" title="多普勒导航"></a>多普勒导航</h2><p>磁罗盘或陀螺仪、多普勒雷达：多普勒导航雷达不断向地面发射电磁波，雷达接收到地面回波的频率与发射电磁波的频率 ft 相差一个多普勒频率 fd，计算出无人机相对于地面的飞行速度 (地速)，以及偏流角 (即地速与无人机纵轴之间的夹角)。</p>
+<ul>
+<li>自主性好，反应快，抗干扰性强，测速精度高，能用于各种气候条件和地形条件。</li>
+<li>必须发射电波，因此其隐蔽性不好；系统工作受地形影响，性能与反射面的形状有关;精度受天线姿态的影响；测量有积累误差，系统会随飞行距离的增加而使误差增大。</li>
+</ul>
+<h2 id="地形辅助导航"><a href="#地形辅助导航" class="headerlink" title="地形辅助导航"></a>地形辅助导航</h2><p>利用预先储存的飞行路线中某些地区的特征数据，与实际飞行过程中测量到的相关数据进行不断比较来实施导航修正的一种方法。地形辅助导航可分为地形匹配、景像匹配和桑地亚惯性地形辅助导航。</p>
+<ul>
+<li><p>地形匹配：当飞机飞越某块已数字化的地形时，机载无线电高度表测出相对高度，气压 / 惯性综合测绝对高度，两者相减即得地形标高。</p>
+</li>
+<li><p>景象匹配：通过摄像等手段获取的预定飞行路径的景像信息，将这些景象数字化后储存在机载的相关计算设备中，这些信息具有很好的可观测性。</p>
+</li>
+<li><p>桑地亚惯性地形辅助导航：采用了推广的递推卡尔曼滤波算法，具有更好的实时性。其原理是：根据惯导系统输出的位置在数字地图上找到地形高程。而惯导系统输出的绝对高度与地形高程之差为飞行器相对高度的估计值。它与无线电高度表实测相对高度之差就是卡尔曼滤波的测量值。地形的非线性导致了测量方程的非线性。采用地形随机线性化算法可以实时获得地形斜率，得到线性化的测量方程，结合惯导系统的误差状态方程，经递推卡尔曼滤波算法可得到导航误差状态的最佳估计。利用输出校正可修正惯导系统的导航误差，从而获得最佳导航状态。</p>
+</li>
+<li><p>没有累积误差，隐蔽性好，抗干扰性能较强;</p>
+</li>
+<li><p>计算量较大，实时性受到制约；工作性能受地形影响，适合起伏变化大的地形，不适宜于在平原或者海面使用；同时还受天气影响，在大雾和多云等天气条件下导航效果不佳；要求飞行器按照规定的路线飞行，不利于飞行器的机动性。</p>
+</li>
+</ul>
+<h2 id="地磁导航"><a href="#地磁导航" class="headerlink" title="地磁导航"></a>地磁导航</h2><p>理论上只要确定点的地磁场矢量即可实现全球定位，地磁导航分为地磁匹配与地磁滤波两种方式。</p>
+<ul>
+<li>无源、无辐射、隐蔽性强，不受敌方干扰、全天时、全天候、全地域、能耗低的优良特征，导航不存在误差积累，在跨海制导方面有一定的优势。</li>
+<li>地磁匹配需要存储大量的地磁数据；实时性与计算机处理数据的能力有关。</li>
+</ul>
+<h1 id="组合导航"><a href="#组合导航" class="headerlink" title="组合导航"></a>组合导航</h1><h2 id="INS-GPS-组合导航系统"><a href="#INS-GPS-组合导航系统" class="headerlink" title="INS/GPS 组合导航系统"></a>INS/GPS 组合导航系统</h2><ul>
+<li>对惯导系统可以实现惯性传感器的校准、惯导系统的空中对准、惯导系统高度通道的稳定</li>
+<li>对 GPS 系统来说，惯导系统的辅助可以提高其跟踪卫星的能力，提高接收机动态特性和抗干扰性</li>
+<li>INS/GPS 综合还可以实现 GPS 完整性的检测，从而提高可靠性。</li>
+<li>INS/GPS 组合可以实现一体化，把 GPS 接收机放入惯导部件中，以进一步减少系统的体积、质量和成本，便于实现惯导和 GPS 同步，减小非同步误差。</li>
+</ul>
+<h2 id="惯导-多普勒组合导航系统"><a href="#惯导-多普勒组合导航系统" class="headerlink" title="惯导 / 多普勒组合导航系统"></a>惯导 / 多普勒组合导航系统</h2><ul>
+<li>既解决了多普勒导航受到地形因素的影响，又可以解决惯导自身的累积误差，同时在隐蔽性上二者实现了较好的互补</li>
+</ul>
+<h2 id="惯导-地磁组合导航系统"><a href="#惯导-地磁组合导航系统" class="headerlink" title="惯导 / 地磁组合导航系统"></a>惯导 / 地磁组合导航系统</h2><ul>
+<li>地磁匹配技术的长期稳定性弥补惯系统误差随时间累积的缺点，利用惯导系统的短期高精度弥补地磁匹配系统易受干扰等不足，则可实现惯性 / 地磁导航，具备自主性强、隐蔽性好、成本低、可用范围广等优点，是当前导航研究领域的一个热点。</li>
+</ul>
+<h2 id="惯导-地形匹配组合导航系统"><a href="#惯导-地形匹配组合导航系统" class="headerlink" title="惯导 / 地形匹配组合导航系统"></a>惯导 / 地形匹配组合导航系统</h2><ul>
+<li>由于地形匹配定位的精度很高，因此可以利用这种精确的位置信息来消除惯性导航系统长时间工作的累计误差，提高惯性导航系统的定位精度。由于地形匹配辅助导航系统具有自主性和高精度的突出优点，将其应用于装载有多种图像传感器的无人机导航系统，构成惯性 / 地形匹配组合导航系统，将是地形匹配辅助导航技术发展和应用的未来趋势。</li>
+</ul>
+<h2 id="GPS-航迹推算组合导航系统"><a href="#GPS-航迹推算组合导航系统" class="headerlink" title="GPS / 航迹推算组合导航系统"></a>GPS / 航迹推算组合导航系统</h2><p>航迹推算的基本原理: 在 GPS 失效情况下，依据大气数据计算机测得的空速、磁航向测得的真北航向以及当地风速风向，推算出地速及航迹角。当 GPS 定位信号中断或质量较差时，由航迹推算系统确定无人机的位置和速度；当 GPS 定位信号质量较好时，利用 GPS 高精度的定位信息对航迹推算系统进行校正，从而构成了高精度、高可靠性的无人机导航定位系统，在以较高质量保证了飞行安全和品质的同时，有效降低了系统的成本，使无人机摆脱对雷达、测控站等地面系统的依赖。</p>
+<h1 id="导航技术发展趋势"><a href="#导航技术发展趋势" class="headerlink" title="导航技术发展趋势"></a>导航技术发展趋势</h1><h2 id="新型惯导"><a href="#新型惯导" class="headerlink" title="新型惯导"></a>新型惯导</h2><p>光纤惯导、激光惯导、微固态惯导</p>
+<h2 id="增加组合因子"><a href="#增加组合因子" class="headerlink" title="增加组合因子"></a>增加组合因子</h2><h2 id="数据融合新技术"><a href="#数据融合新技术" class="headerlink" title="数据融合新技术"></a>数据融合新技术</h2><p>现在多用卡尔曼滤波器。新的如自适应滤波技术，再进行滤波得同时，利用观测数据得信息，不断在线估计和修正模型参数、噪声统计特性和状态增益矩阵，以提高滤波精度，从而获得对象状态得最优估计。将神经网络人工智能、小波变换等各种信息处理方法引入以组合制导为核心的信息融合技术中正在引起人们的高度重视，这些新技术一旦研制成功，必将进一步提高组合制导的综合性能。</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://example.com/2021/05/20/%E6%97%A0%E4%BA%BA%E6%9C%BA%E5%AF%BC%E8%88%AA/" data-id="ckovxlo6n0005c4v3144sciwt" data-title="" class="article-share-link">Share</a>
+      
+      
+      
+    </footer>
+  </div>
+  
+</article>
+
+
+
+  
+    <article id="post-PX4" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2021/05/20/PX4/" class="article-date">
+  <time class="dt-published" datetime="2021-05-19T20:41:58.657Z" itemprop="datePublished">2021-05-20</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <h1 id="开发环境搭建"><a href="#开发环境搭建" class="headerlink" title="开发环境搭建"></a>开发环境搭建</h1><h2 id="Windows"><a href="#Windows" class="headerlink" title="Windows"></a>Windows</h2><h3 id="Toolchain"><a href="#Toolchain" class="headerlink" title="Toolchain"></a>Toolchain</h3><p>​    <a target="_blank" rel="noopener" href="https://s3-us-west-2.amazonaws.com/px4-tools/PX4+Windows+Cygwin+Toolchain/PX4+Windows+Cygwin+Toolchain+0.9.msi">https://s3-us-west-2.amazonaws.com/px4-tools/PX4+Windows+Cygwin+Toolchain/PX4+Windows+Cygwin+Toolchain+0.9.msi</a><br>安装过程中选择clone PX4 仓库，否则需要安装后手动克隆</p>
+<ol>
+<li>安装工具链</li>
+<li>运行run-console.bat,打开 linux-like Cygwin bash console</li>
+<li>Clone PX4-Autopilot<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git clone --recursive -j8 https://github.com/PX4/PX4-Autopilot.git</span><br></pre></td></tr></table></figure></li>
+<li>构建PX4，如<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash">导航到PX4-Autopilot目录</span></span><br><span class="line">cd PX4-Autopilot</span><br><span class="line"><span class="meta">#</span><span class="bash">使用jMAVSim 构建并运行SITL 仿真测试构建</span></span><br><span class="line">make px4_sitl jmavsim</span><br><span class="line"><span class="meta">#</span><span class="bash">make px4_sitl gazebo</span></span><br><span class="line"><span class="meta">#</span><span class="bash">make px4_fmu-v4_default</span></span><br></pre></td></tr></table></figure></li>
+</ol>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://docs.px4.io/master/en/flight_controller/pixhawk4.html">Pixhawk 4</a>: <code>make px4_fmu-v5_default</code></li>
+<li><a target="_blank" rel="noopener" href="https://docs.px4.io/master/en/flight_controller/pixhawk4_mini.html">Pixhawk 4 Mini</a>: <code>make px4_fmu-v5_default</code></li>
+<li><a target="_blank" rel="noopener" href="https://docs.px4.io/master/en/flight_controller/cuav_v5_plus.html">CUAV V5+</a>: <code>make px4_fmu-v5_default</code></li>
+<li><a target="_blank" rel="noopener" href="https://docs.px4.io/master/en/flight_controller/cuav_v5_nano.html">CUAV V5 nano</a>: <code>make px4_fmu-v5_default</code></li>
+<li><a target="_blank" rel="noopener" href="https://docs.px4.io/master/en/flight_controller/pixracer.html">Pixracer</a>: <code>make px4_fmu-v4_default</code></li>
+<li><a target="_blank" rel="noopener" href="https://docs.px4.io/master/en/flight_controller/pixhawk3_pro.html">Pixhawk 3 Pro</a>: <code>make px4_fmu-v4pro_default</code></li>
+<li><a target="_blank" rel="noopener" href="https://docs.px4.io/master/en/flight_controller/pixhawk_mini.html">Pixhawk Mini</a>: <code>make px4_fmu-v3_default</code></li>
+<li><a target="_blank" rel="noopener" href="https://docs.px4.io/master/en/flight_controller/pixhawk-2.html">Pixhawk 2 (Cube Black)</a>: <code>make px4_fmu-v3_default</code></li>
+<li><a target="_blank" rel="noopener" href="https://docs.px4.io/master/en/flight_controller/mro_pixhawk.html">mRo Pixhawk</a>: <code>make px4_fmu-v3_default</code> (supports 2MB Flash)</li>
+<li><a target="_blank" rel="noopener" href="https://docs.px4.io/master/en/flight_controller/holybro_pix32.html">Holybro pix32</a>: <code>make px4_fmu-v2_default</code></li>
+<li><a target="_blank" rel="noopener" href="https://docs.px4.io/master/en/flight_controller/pixfalcon.html">Pixfalcon</a>: <code>make px4_fmu-v2_default</code></li>
+<li><a target="_blank" rel="noopener" href="https://docs.px4.io/master/en/flight_controller/dropix.html">Dropix</a>: <code>make px4_fmu-v2_default</code></li>
+<li>Pixhawk 1 with 2 MB flash: <code>make px4_fmu-v3_default</code></li>
+</ul>
+<ol start="5">
+<li>上传固件</li>
+</ol>
+<p><code>make px4_fmu_v4_default  upload</code></p>
+<h3 id="PX4代码"><a href="#PX4代码" class="headerlink" title="PX4代码"></a>PX4代码</h3><figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line">git <span class="built_in">clone</span> https://github.com/&lt;your git name&gt;/PX4-Autopilot.git</span><br><span class="line"><span class="built_in">cd</span> PX4-Autopilot</span><br><span class="line">git submodule update --init --recursive</span><br><span class="line">git remote add upstream https://github.com/PX4/PX4-Autopilot.git</span><br><span class="line">git remote -v</span><br><span class="line"><span class="comment">#创建自己的分支</span></span><br><span class="line">git branch</span><br><span class="line">git checkout -b &lt;your feature branch name&gt;</span><br><span class="line"></span><br><span class="line"><span class="comment">#提交修改</span></span><br><span class="line">git add &lt;file name&gt;</span><br><span class="line">git  commit -m <span class="string">&quot;信息&quot;</span></span><br><span class="line">git status</span><br><span class="line"><span class="comment">#获得upstream的最新修改</span></span><br><span class="line">git checkout master</span><br><span class="line">git pull upstream master</span><br><span class="line"><span class="comment">#</span></span><br><span class="line">git checkout &lt;your feature branch name&gt;</span><br><span class="line">git rebase master</span><br><span class="line">git push origin &lt;your feature branch name&gt;</span><br><span class="line"></span><br><span class="line"><span class="comment">#获得某个版本</span></span><br><span class="line">git tag -l</span><br><span class="line">git checkout v1.7.4beta</span><br><span class="line"><span class="comment">#更新子模块</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<h3 id="PX4控制台"><a href="#PX4控制台" class="headerlink" title="PX4控制台"></a>PX4控制台</h3><h1 id="控制器图解"><a href="#控制器图解" class="headerlink" title="控制器图解"></a>控制器图解</h1><h2 id="旋翼-MR"><a href="#旋翼-MR" class="headerlink" title="旋翼(MR)"></a>旋翼(MR)</h2><p><img src="https://dev.px4.cc/master/assets/diagrams/px4_mc_position_controller_diagram.png" alt="多旋翼位置控制器图解"></p>
+<ul>
+<li>状态估计来自 <a target="_blank" rel="noopener" href="https://docs.px4.io/en/advanced_config/tuning_the_ecl_ekf.html">EKF2</a> 模块。</li>
+<li>这是一个标准的位置 - 速度级联控制回路。</li>
+<li>在某些模式，外环 (位置回路) 可能会被绕过 (图中在外环之后增加一个多路开关来表示)。 只有在位置保持模式或某轴无速度请求时，位置回路才会发挥作用。</li>
+<li>内环 (速度回路) 控制器使用箝位法对积分器做了抗饱和处理 (ARW)。</li>
+</ul>
+<h2 id="固定翼-FW"><a href="#固定翼-FW" class="headerlink" title="固定翼(FW)"></a>固定翼(FW)</h2><h4 id="位置控制"><a href="#位置控制" class="headerlink" title="位置控制"></a>位置控制</h4><p>总能量控制(TECS)：控制飞机真实高度和空速，飞机俯仰角和空速和高度耦合</p>
+<p><img src="https://dev.px4.cc/master/assets/diagrams/tecs_in_context.svg" alt="TECS"></p>
+<p><img src="https://dev.px4.cc/master/assets/diagrams/TECS_throttle.jpg" alt=" Total energy control loop"></p>
+<p><img src="https://dev.px4.cc/master/assets/diagrams/TECS_pitch.jpg" alt="Energy balance loop"></p>
+<p>总能STE：</p>
+<p>​    动能SKE: $E=0.5V_{TAS}^2$         $E_{rate}=V_{TAS}V_{rate}$</p>
+<p>​    势能SPE：$P=gH$            $P_{rate}=gV_z$</p>
+<p>高度h:</p>
+<ul>
+<li>目标高度采用最大升降速率对目标高度进行缓冲，同时有一阶滤波</li>
+<li>目标升降速度：（目标高度-实际高度）*K1 + (当前目标高度-上一目标高度) *K2/dt</li>
+<li>实际量：气压计高度和EKF速度，如果没有Z轴惯导使用三阶互补滤波对 h 和 vz 进行估计</li>
+</ul>
+<p>空速：</p>
+<ul>
+<li>目标空速：airspeed*EAS2TAS</li>
+<li>目标空速率 = 前后两次目标空速的差*时间系数</li>
+<li>真实空速：经过二阶互补滤波</li>
+<li>空速变化率：$Speed_{deriv}=g*sinP +acc_x$,   再经过一阶互补滤波</li>
+</ul>
+<p>真实空速TAS：$V_{TAS}/V_E = \sqrt{\rho_0/\rho}$</p>
+<p>指示空速（表速 IAS）：海平面标准大气条件下（760 毫米水银柱，气温零上 15 度）空速与动压的关系而表示的速度值,实际表示的是飞行器空气动力的大小</p>
+<p>校准空速（CAS)：指示空速经过修正安装误差、仪表指示误差</p>
+<p>当量空速：若是在高速、高海拔的条件下，校准空速还需要修正由于空气可压缩性产生的误差，此时的校准空速也称为<a target="_blank" rel="noopener" href="https://baike.baidu.com/item/%E5%BD%93%E9%87%8F%E7%A9%BA%E9%80%9F">当量空速</a>（equivalent airspeed，EAS）</p>
+<h5 id="油门控制"><a href="#油门控制" class="headerlink" title="油门控制"></a>油门控制</h5><p><img src="https://pic3.zhimg.com/80/v2-00edb81aab684e53bc7b7b0fd841665a_720w.jpg" alt="油门控制"></p>
+<p>预测油门由线性表查询，不准，通过PID动态修正。</p>
+<h5 id="升降控制"><a href="#升降控制" class="headerlink" title="升降控制"></a>升降控制</h5><p><img src="https://pic4.zhimg.com/80/v2-dfb8b57ed8f25b7aaf77bffbc9e8b92b_720w.jpg" alt="升降控制"></p>
+<p>同样维护一个从目标 SEB 变化率到目标俯仰角的线性映射关系，叫 climb_angle_to_SEB_rate，该参数等于真实空速 * g0 * 俯仰时间常数。</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://example.com/2021/05/20/PX4/" data-id="ckovxlo6a0001c4v3cjsnftyo" data-title="" class="article-share-link">Share</a>
+      
+      
+      
+    </footer>
+  </div>
+  
+</article>
+
+
+
+  
+    <article id="post-电池、电机、螺旋桨选型及搭配" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2021/05/20/%E7%94%B5%E6%B1%A0%E3%80%81%E7%94%B5%E6%9C%BA%E3%80%81%E8%9E%BA%E6%97%8B%E6%A1%A8%E9%80%89%E5%9E%8B%E5%8F%8A%E6%90%AD%E9%85%8D/" class="article-date">
+  <time class="dt-published" datetime="2021-05-19T20:41:58.657Z" itemprop="datePublished">2021-05-20</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <h1 id="电池、电机、螺旋桨选型及搭配"><a href="#电池、电机、螺旋桨选型及搭配" class="headerlink" title="电池、电机、螺旋桨选型及搭配"></a>电池、电机、螺旋桨选型及搭配</h1><h2 id="电机"><a href="#电机" class="headerlink" title="电机"></a>电机</h2><h3 id="KV值——大KV配小桨，小KV配大桨"><a href="#KV值——大KV配小桨，小KV配大桨" class="headerlink" title="KV值——大KV配小桨，小KV配大桨"></a>KV值——大KV配小桨，小KV配大桨</h3><p>KV值是每 1V 的电压下电机每分钟空转的转速，例如KV980，在1V电压下空转转速是980r/min ,10电压下是8000 r/min</p>
+<ul>
+<li>绕线匝数多的，KV 值低，最高输出电流小，但扭力大</li>
+<li>绕线匝数少的，KV 值高，最高输出电流大，但扭力小</li>
+</ul>
+<p>KV 值越小，同等电压下转速越低，扭力越大，可带更大的桨。KV 值越大，同等电压下转速越高，扭力越小，只能带小桨。相对的说 KV 值越小，效率就越高。航拍要选用低 KV 电机配大桨，转速低，效率高，同样低转速电机的震动也小。对航拍来说这些都是极为有利的。</p>
+<h3 id="电机型号——定子粗的力气大"><a href="#电机型号——定子粗的力气大" class="headerlink" title="电机型号——定子粗的力气大"></a>电机型号——定子粗的力气大</h3><p>前两位表示定子直径，后两位表示定子高度</p>
+<h3 id="电机效率——3-5A-效率高"><a href="#电机效率——3-5A-效率高" class="headerlink" title="电机效率——3~5A,效率高"></a>电机效率——3~5A,效率高</h3><p>效率的标注方式为：g/W, 电机的功率和拉力并不是成正比的，也就是说 50W 的时候 450g 拉力，100W 的时候就不是 900g 了，可能只有 700g。具体效率要看电机的效率表。大多数的电机在 3A~5A 的电流下效率是最高的。</p>
+<h3 id="经验"><a href="#经验" class="headerlink" title="经验"></a>经验</h3><ul>
+<li><strong>整机重量，应该小于电机最大动力的 2/5。</strong></li>
+</ul>
+<p>对于入门玩家来说 2212 电机确实可以。但对于航拍来说，2212 明显不够。四轴超过 1.5 公斤的重量这电机就歇菜了。而大多入门航拍都是 1.5~2KG 的机子。</p>
+<p>四轴的升力除了把自身抬起来之外还要用一部分力来前进后退，左右横滚。最关键的还有抗风，我的建议就是保留五分之三的升力来做这些动作和抗风，而且电池电压降低后不至于升力不足而炸鸡。通俗的说就是 2212 电机四个最大拉力是 3320 克，整机重量不要超过最大拉力的五分之二，也就是 1328 克。如果超过这个界限，那么电机就是高负荷运行，后果就是效率变低，电机震动变大，（朗宇和 XXD2212 的动平衡很差，高速运行时整震动很大很大）影响飞控自稳，你会看到飞机起飞后不断颤抖。一遇到风就摇摇欲坠。我当初的第一台四轴也是 2212 电机带云台 1800G 左右，就是这种情况。经过我反复测试，起飞 1400 克以下就很稳，超过 1500 克就随时可能炸鸡。</p>
+<ul>
+<li><strong>选电机一定要看参数表，如果没有参数表，请不要选择。</strong></li>
+</ul>
+<p>四轴用的电机基本都是外转子电机。内部绕线圈的是定子。很多无良厂商都标注的电机型号指的是外转子。一不留神就受骗了。</p>
+<h3 id="电机选择"><a href="#电机选择" class="headerlink" title="电机选择"></a>电机选择</h3><p>选最大拉力向磁场强度越小越好，定子直径与高度乘积大，KV不能太大</p>
+<ol>
+<li>确定每个电机所需要的最大拉力；</li>
+<li>确定在最大拉力下不磁饱和的电机，在最大拉力下磁场强度B越小越好；</li>
+<li>比对价格，不合适再选取</li>
+<li>电机KV值对力效基本没有影响（它的影响只有铜损，也就是内阻发热，kv 越小的电机发热就越小，这是在线径一样情况下得出的），但不能选择 kv 太高的电机，因为 kv 太高了，电流很大，这个时候内阻发热就显著了。</li>
+<li>电转子和定子之间气隙小、定子直径与高度乘积大、铁芯导磁率好的电机。这里我们最容易看到的就是定子直径与高度的乘积，这个值越大，电机在线圈磁场强度很小时就能产生越大的力矩。</li>
+</ol>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://example.com/2021/05/20/%E7%94%B5%E6%B1%A0%E3%80%81%E7%94%B5%E6%9C%BA%E3%80%81%E8%9E%BA%E6%97%8B%E6%A1%A8%E9%80%89%E5%9E%8B%E5%8F%8A%E6%90%AD%E9%85%8D/" data-id="ckovxlo6r0007c4v3gv5ib6l7" data-title="" class="article-share-link">Share</a>
+      
+      
+      
+    </footer>
+  </div>
+  
+</article>
+
+
+
+  
+    <article id="post-#Typora使用说明" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2021/05/20/#Typora%E4%BD%BF%E7%94%A8%E8%AF%B4%E6%98%8E/" class="article-date">
+  <time class="dt-published" datetime="2021-05-19T20:41:58.626Z" itemprop="datePublished">2021-05-20</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <h1 id="Typora使用说明"><a href="#Typora使用说明" class="headerlink" title="Typora使用说明"></a>Typora使用说明</h1><h2 id="常用快捷键"><a href="#常用快捷键" class="headerlink" title="常用快捷键"></a>常用快捷键</h2><ul>
+<li>表格：Ctrl +t</li>
+<li>代码：Ctrl  + Shift  + K</li>
+<li>数学公式：Ctrl  + Shift + M</li>
+</ul>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://example.com/2021/05/20/#Typora%E4%BD%BF%E7%94%A8%E8%AF%B4%E6%98%8E/" data-id="ckovxlo5w0000c4v3adgz59tz" data-title="" class="article-share-link">Share</a>
+      
+      
+      
+    </footer>
+  </div>
+  
+</article>
+
+
+
+  
     <article id="post-一些想法" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
   <div class="article-meta">
     <a href="/2021/05/20/%E4%B8%80%E4%BA%9B%E6%83%B3%E6%B3%95/" class="article-date">
@@ -98,7 +628,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://example.com/2021/05/20/%E4%B8%80%E4%BA%9B%E6%83%B3%E6%B3%95/" data-id="ckovurm9r0001zcv37pdw31ic" data-title="一些想法" class="article-share-link">Share</a>
+      <a data-url="http://example.com/2021/05/20/%E4%B8%80%E4%BA%9B%E6%83%B3%E6%B3%95/" data-id="ckovxlo6f0002c4v35jgd7dv7" data-title="一些想法" class="article-share-link">Share</a>
       
       
       
@@ -142,14 +672,79 @@
 <h3 id="Generate-static-files"><a href="#Generate-static-files" class="headerlink" title="Generate static files"></a>Generate static files</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo generate</span><br></pre></td></tr></table></figure>
 
 <p>More info: <a target="_blank" rel="noopener" href="https://hexo.io/docs/generating.html">Generating</a></p>
-<h3 id="Deploy-to-remote-sites"><a href="#Deploy-to-remote-sites" class="headerlink" title="Deploy to remote sites"></a>Deploy to remote sites</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo deploy</span><br></pre></td></tr></table></figure>
+<h3 id="Deploy-to-remote-sites"><a href="#Deploy-to-remote-sites" class="headerlink" title="Deploy to remote sites"></a>Deploy to remote sites</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo deploy </span><br></pre></td></tr></table></figure>
 
 <p>More info: <a target="_blank" rel="noopener" href="https://hexo.io/docs/one-command-deployment.html">Deployment</a></p>
 
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://example.com/2021/05/20/hello-world/" data-id="ckovurm8w0000zcv3aqrj9zm4" data-title="Hello World" class="article-share-link">Share</a>
+      <a data-url="http://example.com/2021/05/20/hello-world/" data-id="ckovxlo6j0003c4v3fi3s5dvh" data-title="Hello World" class="article-share-link">Share</a>
+      
+      
+      
+    </footer>
+  </div>
+  
+</article>
+
+
+
+  
+    <article id="post-自然辩证法" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2021/05/11/%E8%87%AA%E7%84%B6%E8%BE%A9%E8%AF%81%E6%B3%95/" class="article-date">
+  <time class="dt-published" datetime="2021-05-11T06:30:50.000Z" itemprop="datePublished">2021-05-11</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="p-name article-title" href="/2021/05/11/%E8%87%AA%E7%84%B6%E8%BE%A9%E8%AF%81%E6%B3%95/">自然辩证法</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <p>#自然辩证法<br>##一、简答题</p>
+<ol>
+<li><p>为什么说自然辩证法是一颗完整的学科体系？其研究内容有哪些？15</p>
+</li>
+<li><p>归纳和演绎的区别和联系？15<br>##二、论述题</p>
+</li>
+<li><p>三种自然观的观点和特征20<br> 生态自然观：</p>
+<p> 系统自然观：</p>
+<pre><code> 观点：
+ 1. 辨证统一的演化。自然界是简单性和复杂性、构成性和生成性、确定性和随机性辨证统一的物质系统，它以进化和退化相互交替的形式演化；
+ 2. 系统是有若干要素通过非线性相互作用构成的整体，它既与其所在的环境发生联系，又与其它系统发生联系，系统具有开放性、动态性、整体性和层次性等特点；
+ 3. 系统演化是不可逆的
+</code></pre>
+</li>
+<li><p>科学技术和经济转型的关系20<br> 现代科技革命推动<strong>生产方式</strong>的变革。<br> 首先，现代科技革命使<strong>生产力的构成要素</strong>发生了质的变革，从而极大推动社会生产力的发展。劳动资料、劳动对象越来越成为科技的物化，劳动者“智化”程度也越来越高。<br> 其次，科技导致<strong>产业结构</strong>的重大调整，传统产业在技术改造中面目一新，新的“知识产业”迅速兴起。<br> 再次，科学技术推动了生产关系的调整。<br>总结：推动了<strong>生产力内部各要素</strong>的变革，引发了产业结构的调整，经济形式的变化和经济增长方式的转变，造就了经济转型。<br>##三、材料题</p>
+</li>
+<li><p>如何看待科学技术对人的异化和对自然的异化20</p>
+<p> 科技异化实质上是资本主义制度下劳动异化和人的异化的一种必然结果。由于劳动是人最根本最现实的实践活动，是人及人类社会存在的根本方式，劳动的异化必然会带来人的其它社会活动和社会关系的全面异化，科学技术也不例外，因为“宗教、家庭、国家、法律、道德、科学、艺术等，都不过是生产的一些特殊的方式，并且受生产的普遍规律的支配。”因此，科学技术作为劳动以及人处理自身和自然界关系的社会活动的产物，也必然随着资本主义社会劳动的异化而变现出异化的现象。<br> 最根本的是要消灭对科学技术的资本主义利用方式，把科学技术从资本主义制度中解放出来。也就是说只有通过无产阶级革命来最终解决资本主义的科技异化问题。当然，在马克思看来，异化的完全克服只有在共产主义社会制度中才能最终实现。</p>
+</li>
+<li><p>如何理解“科学技术是一种在历史上起推动作用的、革命的力量”？20</p>
+<p> 科学技术是历史发展的火车头，改变了社会历史进程，造就了新的社会形态；推动了生产力内部各要素的变革，引发了产业结构的调整，经济形式的变化和经济增长方式的转变，造就了经济转型。<br> 科学技术作为社会发展的动力，是马克思主义的基本观点。<br> 科学是生产力的“知识的形态”。作为生产力的科学技术，能够大大提高社会生产力，推动整个人类物质生产迅猛发展。<br> 作为强大精神力量的科学技术，能够促进人类思想解放，在产业革命的基础上，推动社会变革，对社会生产关系产生有力影响。<br> 最为人类最终走向自由的科学技术，能够作为解放的杠杆，增进人类精神生活的丰富性和自我发展，有助于实现人的全面自由的发展。</p>
+</li>
+<li><p>谈谈习近平科学技术创新观20</p>
+</li>
+<li><p>科学技术伦理观</p>
+</li>
+</ol>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://example.com/2021/05/11/%E8%87%AA%E7%84%B6%E8%BE%A9%E8%AF%81%E6%B3%95/" data-id="ckovxlo730008c4v34ojwh98e" data-title="自然辩证法" class="article-share-link">Share</a>
       
       
       
@@ -192,11 +787,23 @@
       <ul>
         
           <li>
-            <a href="/2021/05/20/%E4%B8%80%E4%BA%9B%E6%83%B3%E6%B3%95/">一些想法</a>
+            <a href="/2021/05/20/%E6%97%A0%E4%BA%BA%E6%9C%BA%E8%BF%90%E5%8A%A8%E7%9B%AE%E6%A0%87%E8%B7%9F%E8%B8%AA/">(no title)</a>
           </li>
         
           <li>
-            <a href="/2021/05/20/hello-world/">Hello World</a>
+            <a href="/2021/05/20/%E6%97%A0%E4%BA%BA%E6%9C%BA%E5%AF%BC%E8%88%AA%E5%88%B6%E5%AF%BC%E4%B8%8E%E6%8E%A7%E5%88%B6/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2021/05/20/%E6%97%A0%E4%BA%BA%E6%9C%BA%E4%BC%A0%E6%84%9F%E5%99%A8%E7%89%B9%E6%80%A7/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2021/05/20/%E6%97%A0%E4%BA%BA%E6%9C%BA%E5%AF%BC%E8%88%AA/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2021/05/20/PX4/">(no title)</a>
           </li>
         
       </ul>

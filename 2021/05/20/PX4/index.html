@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  
+  <title>Hexo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="开发环境搭建WindowsToolchain​    https:&#x2F;&#x2F;s3-us-west-2.amazonaws.com&#x2F;px4-tools&#x2F;PX4+Windows+Cygwin+Toolchain&#x2F;PX4+Windows+Cygwin+Toolchain+0.9.msi安装过程中选择clone PX4 仓库，否则需要安装后手动克隆  安装工具链 运行run-console.bat,打开 lin">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Hexo">
+<meta property="og:url" content="http://example.com/2021/05/20/PX4/index.html">
+<meta property="og:site_name" content="Hexo">
+<meta property="og:description" content="开发环境搭建WindowsToolchain​    https:&#x2F;&#x2F;s3-us-west-2.amazonaws.com&#x2F;px4-tools&#x2F;PX4+Windows+Cygwin+Toolchain&#x2F;PX4+Windows+Cygwin+Toolchain+0.9.msi安装过程中选择clone PX4 仓库，否则需要安装后手动克隆  安装工具链 运行run-console.bat,打开 lin">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://dev.px4.cc/master/assets/diagrams/px4_mc_position_controller_diagram.png">
+<meta property="og:image" content="https://dev.px4.cc/master/assets/diagrams/tecs_in_context.svg">
+<meta property="og:image" content="https://dev.px4.cc/master/assets/diagrams/TECS_throttle.jpg">
+<meta property="og:image" content="https://dev.px4.cc/master/assets/diagrams/TECS_pitch.jpg">
+<meta property="og:image" content="https://pic3.zhimg.com/80/v2-00edb81aab684e53bc7b7b0fd841665a_720w.jpg">
+<meta property="og:image" content="https://pic4.zhimg.com/80/v2-dfb8b57ed8f25b7aaf77bffbc9e8b92b_720w.jpg">
+<meta property="article:published_time" content="2021-05-19T20:41:58.657Z">
+<meta property="article:modified_time" content="2021-05-17T10:48:22.000Z">
+<meta property="article:author" content="John Doe">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://dev.px4.cc/master/assets/diagrams/px4_mc_position_controller_diagram.png">
+  
+    <link rel="alternate" href="/atom.xml" title="Hexo" type="application/atom+xml">
+  
+  
+    <link rel="shortcut icon" href="/favicon.png">
+  
+  
+    
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/typeface-source-code-pro@0.0.71/index.min.css">
+
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+    
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.min.css">
+
+  
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">Hexo</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://example.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+
+      <div class="outer">
+        <section id="main"><article id="post-PX4" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2021/05/20/PX4/" class="article-date">
+  <time class="dt-published" datetime="2021-05-19T20:41:58.657Z" itemprop="datePublished">2021-05-20</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <h1 id="开发环境搭建"><a href="#开发环境搭建" class="headerlink" title="开发环境搭建"></a>开发环境搭建</h1><h2 id="Windows"><a href="#Windows" class="headerlink" title="Windows"></a>Windows</h2><h3 id="Toolchain"><a href="#Toolchain" class="headerlink" title="Toolchain"></a>Toolchain</h3><p>​    <a target="_blank" rel="noopener" href="https://s3-us-west-2.amazonaws.com/px4-tools/PX4+Windows+Cygwin+Toolchain/PX4+Windows+Cygwin+Toolchain+0.9.msi">https://s3-us-west-2.amazonaws.com/px4-tools/PX4+Windows+Cygwin+Toolchain/PX4+Windows+Cygwin+Toolchain+0.9.msi</a><br>安装过程中选择clone PX4 仓库，否则需要安装后手动克隆</p>
+<ol>
+<li>安装工具链</li>
+<li>运行run-console.bat,打开 linux-like Cygwin bash console</li>
+<li>Clone PX4-Autopilot<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git clone --recursive -j8 https://github.com/PX4/PX4-Autopilot.git</span><br></pre></td></tr></table></figure></li>
+<li>构建PX4，如<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash">导航到PX4-Autopilot目录</span></span><br><span class="line">cd PX4-Autopilot</span><br><span class="line"><span class="meta">#</span><span class="bash">使用jMAVSim 构建并运行SITL 仿真测试构建</span></span><br><span class="line">make px4_sitl jmavsim</span><br><span class="line"><span class="meta">#</span><span class="bash">make px4_sitl gazebo</span></span><br><span class="line"><span class="meta">#</span><span class="bash">make px4_fmu-v4_default</span></span><br></pre></td></tr></table></figure></li>
+</ol>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://docs.px4.io/master/en/flight_controller/pixhawk4.html">Pixhawk 4</a>: <code>make px4_fmu-v5_default</code></li>
+<li><a target="_blank" rel="noopener" href="https://docs.px4.io/master/en/flight_controller/pixhawk4_mini.html">Pixhawk 4 Mini</a>: <code>make px4_fmu-v5_default</code></li>
+<li><a target="_blank" rel="noopener" href="https://docs.px4.io/master/en/flight_controller/cuav_v5_plus.html">CUAV V5+</a>: <code>make px4_fmu-v5_default</code></li>
+<li><a target="_blank" rel="noopener" href="https://docs.px4.io/master/en/flight_controller/cuav_v5_nano.html">CUAV V5 nano</a>: <code>make px4_fmu-v5_default</code></li>
+<li><a target="_blank" rel="noopener" href="https://docs.px4.io/master/en/flight_controller/pixracer.html">Pixracer</a>: <code>make px4_fmu-v4_default</code></li>
+<li><a target="_blank" rel="noopener" href="https://docs.px4.io/master/en/flight_controller/pixhawk3_pro.html">Pixhawk 3 Pro</a>: <code>make px4_fmu-v4pro_default</code></li>
+<li><a target="_blank" rel="noopener" href="https://docs.px4.io/master/en/flight_controller/pixhawk_mini.html">Pixhawk Mini</a>: <code>make px4_fmu-v3_default</code></li>
+<li><a target="_blank" rel="noopener" href="https://docs.px4.io/master/en/flight_controller/pixhawk-2.html">Pixhawk 2 (Cube Black)</a>: <code>make px4_fmu-v3_default</code></li>
+<li><a target="_blank" rel="noopener" href="https://docs.px4.io/master/en/flight_controller/mro_pixhawk.html">mRo Pixhawk</a>: <code>make px4_fmu-v3_default</code> (supports 2MB Flash)</li>
+<li><a target="_blank" rel="noopener" href="https://docs.px4.io/master/en/flight_controller/holybro_pix32.html">Holybro pix32</a>: <code>make px4_fmu-v2_default</code></li>
+<li><a target="_blank" rel="noopener" href="https://docs.px4.io/master/en/flight_controller/pixfalcon.html">Pixfalcon</a>: <code>make px4_fmu-v2_default</code></li>
+<li><a target="_blank" rel="noopener" href="https://docs.px4.io/master/en/flight_controller/dropix.html">Dropix</a>: <code>make px4_fmu-v2_default</code></li>
+<li>Pixhawk 1 with 2 MB flash: <code>make px4_fmu-v3_default</code></li>
+</ul>
+<ol start="5">
+<li>上传固件</li>
+</ol>
+<p><code>make px4_fmu_v4_default  upload</code></p>
+<h3 id="PX4代码"><a href="#PX4代码" class="headerlink" title="PX4代码"></a>PX4代码</h3><figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line">git <span class="built_in">clone</span> https://github.com/&lt;your git name&gt;/PX4-Autopilot.git</span><br><span class="line"><span class="built_in">cd</span> PX4-Autopilot</span><br><span class="line">git submodule update --init --recursive</span><br><span class="line">git remote add upstream https://github.com/PX4/PX4-Autopilot.git</span><br><span class="line">git remote -v</span><br><span class="line"><span class="comment">#创建自己的分支</span></span><br><span class="line">git branch</span><br><span class="line">git checkout -b &lt;your feature branch name&gt;</span><br><span class="line"></span><br><span class="line"><span class="comment">#提交修改</span></span><br><span class="line">git add &lt;file name&gt;</span><br><span class="line">git  commit -m <span class="string">&quot;信息&quot;</span></span><br><span class="line">git status</span><br><span class="line"><span class="comment">#获得upstream的最新修改</span></span><br><span class="line">git checkout master</span><br><span class="line">git pull upstream master</span><br><span class="line"><span class="comment">#</span></span><br><span class="line">git checkout &lt;your feature branch name&gt;</span><br><span class="line">git rebase master</span><br><span class="line">git push origin &lt;your feature branch name&gt;</span><br><span class="line"></span><br><span class="line"><span class="comment">#获得某个版本</span></span><br><span class="line">git tag -l</span><br><span class="line">git checkout v1.7.4beta</span><br><span class="line"><span class="comment">#更新子模块</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<h3 id="PX4控制台"><a href="#PX4控制台" class="headerlink" title="PX4控制台"></a>PX4控制台</h3><h1 id="控制器图解"><a href="#控制器图解" class="headerlink" title="控制器图解"></a>控制器图解</h1><h2 id="旋翼-MR"><a href="#旋翼-MR" class="headerlink" title="旋翼(MR)"></a>旋翼(MR)</h2><p><img src="https://dev.px4.cc/master/assets/diagrams/px4_mc_position_controller_diagram.png" alt="多旋翼位置控制器图解"></p>
+<ul>
+<li>状态估计来自 <a target="_blank" rel="noopener" href="https://docs.px4.io/en/advanced_config/tuning_the_ecl_ekf.html">EKF2</a> 模块。</li>
+<li>这是一个标准的位置 - 速度级联控制回路。</li>
+<li>在某些模式，外环 (位置回路) 可能会被绕过 (图中在外环之后增加一个多路开关来表示)。 只有在位置保持模式或某轴无速度请求时，位置回路才会发挥作用。</li>
+<li>内环 (速度回路) 控制器使用箝位法对积分器做了抗饱和处理 (ARW)。</li>
+</ul>
+<h2 id="固定翼-FW"><a href="#固定翼-FW" class="headerlink" title="固定翼(FW)"></a>固定翼(FW)</h2><h4 id="位置控制"><a href="#位置控制" class="headerlink" title="位置控制"></a>位置控制</h4><p>总能量控制(TECS)：控制飞机真实高度和空速，飞机俯仰角和空速和高度耦合</p>
+<p><img src="https://dev.px4.cc/master/assets/diagrams/tecs_in_context.svg" alt="TECS"></p>
+<p><img src="https://dev.px4.cc/master/assets/diagrams/TECS_throttle.jpg" alt=" Total energy control loop"></p>
+<p><img src="https://dev.px4.cc/master/assets/diagrams/TECS_pitch.jpg" alt="Energy balance loop"></p>
+<p>总能STE：</p>
+<p>​    动能SKE: $E=0.5V_{TAS}^2$         $E_{rate}=V_{TAS}V_{rate}$</p>
+<p>​    势能SPE：$P=gH$            $P_{rate}=gV_z$</p>
+<p>高度h:</p>
+<ul>
+<li>目标高度采用最大升降速率对目标高度进行缓冲，同时有一阶滤波</li>
+<li>目标升降速度：（目标高度-实际高度）*K1 + (当前目标高度-上一目标高度) *K2/dt</li>
+<li>实际量：气压计高度和EKF速度，如果没有Z轴惯导使用三阶互补滤波对 h 和 vz 进行估计</li>
+</ul>
+<p>空速：</p>
+<ul>
+<li>目标空速：airspeed*EAS2TAS</li>
+<li>目标空速率 = 前后两次目标空速的差*时间系数</li>
+<li>真实空速：经过二阶互补滤波</li>
+<li>空速变化率：$Speed_{deriv}=g*sinP +acc_x$,   再经过一阶互补滤波</li>
+</ul>
+<p>真实空速TAS：$V_{TAS}/V_E = \sqrt{\rho_0/\rho}$</p>
+<p>指示空速（表速 IAS）：海平面标准大气条件下（760 毫米水银柱，气温零上 15 度）空速与动压的关系而表示的速度值,实际表示的是飞行器空气动力的大小</p>
+<p>校准空速（CAS)：指示空速经过修正安装误差、仪表指示误差</p>
+<p>当量空速：若是在高速、高海拔的条件下，校准空速还需要修正由于空气可压缩性产生的误差，此时的校准空速也称为<a target="_blank" rel="noopener" href="https://baike.baidu.com/item/%E5%BD%93%E9%87%8F%E7%A9%BA%E9%80%9F">当量空速</a>（equivalent airspeed，EAS）</p>
+<h5 id="油门控制"><a href="#油门控制" class="headerlink" title="油门控制"></a>油门控制</h5><p><img src="https://pic3.zhimg.com/80/v2-00edb81aab684e53bc7b7b0fd841665a_720w.jpg" alt="油门控制"></p>
+<p>预测油门由线性表查询，不准，通过PID动态修正。</p>
+<h5 id="升降控制"><a href="#升降控制" class="headerlink" title="升降控制"></a>升降控制</h5><p><img src="https://pic4.zhimg.com/80/v2-dfb8b57ed8f25b7aaf77bffbc9e8b92b_720w.jpg" alt="升降控制"></p>
+<p>同样维护一个从目标 SEB 变化率到目标俯仰角的线性映射关系，叫 climb_angle_to_SEB_rate，该参数等于真实空速 * g0 * 俯仰时间常数。</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://example.com/2021/05/20/PX4/" data-id="ckovxlo6a0001c4v3cjsnftyo" data-title="" class="article-share-link">Share</a>
+      
+      
+      
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2021/05/20/%E6%97%A0%E4%BA%BA%E6%9C%BA%E5%AF%BC%E8%88%AA/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          (no title)
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2021/05/20/%E7%94%B5%E6%B1%A0%E3%80%81%E7%94%B5%E6%9C%BA%E3%80%81%E8%9E%BA%E6%97%8B%E6%A1%A8%E9%80%89%E5%9E%8B%E5%8F%8A%E6%90%AD%E9%85%8D/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title"></div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+
+  
+    
+
+  
+    
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Archives</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/05/">May 2021</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2021/05/20/%E6%97%A0%E4%BA%BA%E6%9C%BA%E8%BF%90%E5%8A%A8%E7%9B%AE%E6%A0%87%E8%B7%9F%E8%B8%AA/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2021/05/20/%E6%97%A0%E4%BA%BA%E6%9C%BA%E5%AF%BC%E8%88%AA%E5%88%B6%E5%AF%BC%E4%B8%8E%E6%8E%A7%E5%88%B6/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2021/05/20/%E6%97%A0%E4%BA%BA%E6%9C%BA%E4%BC%A0%E6%84%9F%E5%99%A8%E7%89%B9%E6%80%A7/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2021/05/20/%E6%97%A0%E4%BA%BA%E6%9C%BA%E5%AF%BC%E8%88%AA/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2021/05/20/PX4/">(no title)</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      
+      &copy; 2021 John Doe<br>
+      Powered by <a href="https://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+
+<script src="/js/jquery-3.4.1.min.js"></script>
+
+
+
+  
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+
+
+
+  </div>
+</body>
+</html>
